@@ -17,7 +17,7 @@ class TmallCommentCrawler:
             'Accept-Encoding': 'gzip, deflate, br',
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive',
-            'Cookie': '你的cookie',
+            'Cookie': 'lid=tb358500429; wk_cookie2=1f0b7a77b5db43fd137d6f01281dd37d; wk_unb=VyyQ6i7zQ9P42g==; xlly_s=1; cna=nKs0H6yfViMCAXWbBi0ADJo7; dnk=tb358500429; uc1=existShop=false&cookie16=WqG3DMC9UpAPBHGz5QBErFxlCA==&cookie15=W5iHLLyFOGW7aA==&cookie21=URm48syIYn73&pas=0&cookie14=UoYaje3TqSHagg==; uc3=vt3=F8dD2EXY8uO57DhnvFo=&lg2=URm48syIIVrSKA==&id2=VyyQ6i7zQ9P42g==&nk2=F5RGM4iqC+NCac0=; tracknick=tb358500429; _l_g_=Ug==; uc4=nk4=0@FY4NBmpKNZ/A4kp8c1bvfSQxmqXuTQ==&id4=0@VXtfFdPVcAuwvjXKHFRCdw5uTaKB; unb=4019587167; lgc=tb358500429; cookie1=Vy67CEguTnSJl/VzmGz5paJ62i9fFGT9HvjV9icKaQ8=; login=true; cookie17=VyyQ6i7zQ9P42g==; cookie2=2948f234937fd2688799a08198c2f966; _nk_=tb358500429; sgcookie=E100+OKU4J4+vHhBNLiuG+BSCvX2DTBr0ADJ3b4XKMWrVROm2AJeJ2vxwz/2WJ51rbvqwdSDctiTOUlGbj1Zu7V1DXMYZIsUZx6Ek+paiYqcQa0=; cancelledSubSites=empty; sg=972; t=ffa7190fdbb2626d89558148ebee6b74; csg=3c2a9fec; sn=; _tb_token_=581303797776e; mtop_partitioned_detect=1; _m_h5_tk=4967d33ce878be64ff2bf85271fdfd05_1746456131231; _m_h5_tk_enc=b6d3ca6fc035c62a0ee5be79c0018685; isg=BK6u9yeUSoEFaLD6n_GC3FZD_wRwr3Kprmv70dh3A7FNu04VQDwCuVS5dydXZmrB; bxuab=0; tfstk=gUjqhK2sKoEVN8OvogtZ8WJfJntvuhPQ3GO6IOXMhIA06-pMbs1kSc6bkRywa1dXlnbXIc5WN1i1hG7-b9BOc-K_HnBvXhVQOh-NHtKO1elogirkEdWknV00P3qGC5cuOkZCnrvvfTVCfc-ndQJMjKYijT2yIplDjFvcE8JMCj0im12zUdvZnqxMjuXkdp-Ms1xgU3vvZKxMo1XohsCA6X9HoRgconTx7b8XttArjDkp3Ec11Viq049BlBYVDcY54K82KtjvVma2EgsyRUM_J3XdPsvyYugDxT7GTwfTR4KVIZf9zsF-zQ_lDOAMPAmCU9Wc-3j_IvLPZd8HjUkijT-vZFsDxkcyeaXfSiCqQcvAcMTw9UyiXFtlAebhgAedEnvG6eI_9mdcI9IdRHrSoHXPS67N4Th9ETJdXwMr7EvJUBNzaukxY1nNJGDEWVLk-LRQHF0tWEvJUBwzUV39rLvyO-LG.',
             'Host': 'h5api.m.tmall.com',
             'accept': '*/*',
             'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
@@ -264,16 +264,8 @@ class TmallCommentCrawler:
         # 创建DataFrame并保存
         if data:
             df = pd.DataFrame(data)
-            try:
-                # 尝试保存为Excel
-                df.to_excel(output_file, index=False)
-                print(f"评论数据已保存到 {output_file}")
-            except ModuleNotFoundError:
-                # 如果缺少openpyxl库，保存为CSV作为备选
-                csv_file = output_file.replace('.xlsx', '.csv')
-                df.to_csv(csv_file, index=False, encoding='utf-8-sig')
-                print(f"缺少openpyxl库，无法保存为Excel。数据已保存到CSV文件: {csv_file}")
-                print("提示: 可以通过命令 'pip install openpyxl' 安装Excel支持")
+            df.to_excel(output_file, index=False)
+            print(f"评论数据已保存到 {output_file}")
         else:
             print("没有评论数据可以保存")
 
