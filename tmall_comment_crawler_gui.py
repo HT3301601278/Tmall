@@ -612,8 +612,15 @@ class TmallCommentCrawlerGUI(QMainWindow):
                 current_date = time.strftime("%Y%m%d", time.localtime())
                 default_filename = f"{item_id}_{item_title}_{len(comments)}条评论_{current_date}.xlsx"
                 
-                # 设置默认导出路径
-                default_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), default_filename)
+                # 获取应用程序所在目录
+                if getattr(sys, 'frozen', False):
+                    # 如果是打包后的exe，使用可执行文件所在目录
+                    app_dir = os.path.dirname(sys.executable)
+                else:
+                    # 否则使用脚本所在目录
+                    app_dir = os.path.dirname(os.path.abspath(__file__))
+                
+                default_path = os.path.join(app_dir, default_filename)
                 self.export_path_input.setText(default_path)
         else:
             self.statusBar().showMessage("爬取完成，但未获取到评论数据")
