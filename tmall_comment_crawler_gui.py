@@ -217,6 +217,7 @@ class TmallCommentCrawlerGUI(QMainWindow):
         super().__init__()
         self.comments = []  # 存储爬取的评论数据
         self.field_mappings = {}  # 存储字段映射
+        self.default_filename = ""  # 存储默认文件名
         self.setup_ui()
         
     def setup_ui(self):
@@ -536,9 +537,22 @@ class TmallCommentCrawlerGUI(QMainWindow):
     
     def browse_export_path(self):
         """浏览并选择导出路径"""
+        # 获取当前路径
+        current_path = self.export_path_input.text().strip()
+        
+        # 如果当前路径为空但有默认文件名，则使用默认文件名
+        if not current_path and self.default_filename:
+            current_filename = self.default_filename
+            initial_dir = ""
+        else:
+            # 否则从当前路径中提取
+            current_filename = os.path.basename(current_path) if current_path else ""
+            initial_dir = os.path.dirname(current_path) if current_path else ""
+        
         options = QFileDialog.Options()
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "选择保存位置", "", 
+            self, "选择保存位置", 
+            os.path.join(initial_dir, current_filename),  # 使用当前文件名作为默认
             "Excel文件 (*.xlsx);;所有文件 (*)", 
             options=options
         )
@@ -609,8 +623,8 @@ class TmallCommentCrawlerGUI(QMainWindow):
                     if len(item_title) > 30:
                         item_title = item_title[:30] + '...'
                 
-                current_date = time.strftime("%Y%m%d", time.localtime())
-                default_filename = f"{item_id}_{item_title}_{len(comments)}条评论_{current_date}.xlsx"
+                current_date = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+                self.default_filename = f"{item_id}_{item_title}_{len(comments)}条评论_{current_date}.xlsx"
                 
                 # 获取应用程序所在目录
                 if getattr(sys, 'frozen', False):
@@ -620,7 +634,7 @@ class TmallCommentCrawlerGUI(QMainWindow):
                     # 否则使用脚本所在目录
                     app_dir = os.path.dirname(os.path.abspath(__file__))
                 
-                default_path = os.path.join(app_dir, default_filename)
+                default_path = os.path.join(app_dir, self.default_filename)
                 self.export_path_input.setText(default_path)
         else:
             self.statusBar().showMessage("爬取完成，但未获取到评论数据")
