@@ -1,5 +1,7 @@
 *.xlsx
+/.idea
 /__pycache__
 /build
 /dist
-/.idea
+/tmall_comment_crawler_gui.build
+/tmall_comment_crawler_gui.dist
