@@ -188,6 +188,7 @@ class TmallCommentCrawler:
                     '评论内容': comment.get('feedback', ''),
                     '评论时间': comment.get('createTime', ''),
                     '评论时间间隔': comment.get('createTimeInterval', ''),
+                    '评价日期': comment.get('feedbackDate', ''),
                     '评论ID': comment.get('id', ''),
                     '商品ID': comment.get('auctionNumId', ''),
                     '商品标题': comment.get('auctionTitle', ''),
@@ -204,6 +205,10 @@ class TmallCommentCrawler:
                     '是否有详情': "是" if comment.get('hasDetail') == "1" else "否",
                     '是否复购': "是" if comment.get('repeatBusiness') == "1" else "否",
                     '是否金牌用户': "是" if comment.get('goldUser') == "1" else "否",
+                    '是否黑名单用户': "是" if comment.get('formalBlackUser') == "true" else "否",
+                    '是否复制': "是" if comment.get('copy') == "true" else "否",
+                    '是否本人': "是" if comment.get('own') == "true" else "否",
+                    '结构标签结束大小': comment.get('structTagEndSize', ''),
                     
                     # 互动信息
                     '点赞数': comment.get('interactInfo', {}).get('likeCount', 0),
@@ -225,6 +230,7 @@ class TmallCommentCrawler:
                     '用户头像框URL': comment.get('headFrameUrl', ''),
                     '用户主页URL': comment.get('userIndexURL', ''),
                     '用户标记': comment.get('userMark', ''),
+                    '减少用户昵称': comment.get('reduceUserNick', ''),
                     
                     # 分享信息
                     '分享URL': comment.get('share', {}).get('shareURL', ''),
