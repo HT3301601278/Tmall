@@ -1,0 +1,17 @@
+curl --request GET \
+  --url 'https://h5api.m.tmall.com/h5/mtop.taobao.rate.detaillist.get/6.0/?jsv=2.7.4&appKey=12574478&t=1746775120831&sign=60ddcf35d44ec693eaa915d80fb3dc1b&api=mtop.taobao.rate.detaillist.get&v=6.0&isSec=0&ecode=1&timeout=20000&type=jsonp&dataType=jsonp&jsonpIncPrefix=pcdetail&callback=mtopjsonppcdetail25&data={"showTrueCount":false,"auctionNumId":"678391591163","pageNo":1,"pageSize":20,"rateType":"","searchImpr":"-8","orderType":"","expression":"","rateSrc":"pc_rate_list"}' \
+  --header 'Accept-Encoding: gzip, deflate, br' \
+  --header 'Cache-Control: no-cache' \
+  --header 'Connection: keep-alive' \
+  --header 'Cookie: lid=tb358500429; wk_cookie2=1f0b7a77b5db43fd137d6f01281dd37d; wk_unb=VyyQ6i7zQ9P42g==; cna=nKs0H6yfViMCAXWbBi0ADJo7; havana_lgc_exp=1746550754080; isg=BI6OVVYGauBSINBaf1HifLbj32RQD1IJTsvbsbjX-BFMGy91K50yGXzIUUd3BUoh; dnk=tb358500429; uc1=cookie16=Vq8l+KCLySLZMFWHxqs8fwqnEw==&existShop=false&cookie15=WqG3DMC9VAQiUQ==&cookie14=UoYajezJSDcQrw==&pas=0&cookie21=W5iHLLyFe3xm; uc3=id2=VyyQ6i7zQ9P42g==&nk2=F5RGM4iqC+NCac0=&vt3=F8dD2EXZHYVEXGK4qfs=&lg2=VFC/uZ9ayeYq2g==; tracknick=tb358500429; _l_g_=Ug==; uc4=nk4=0@FY4NBmpKNZ/A4kp8c1bvfSWMaGEvMw==&id4=0@VXtfFdPVcAuwvjXKHFRCdhuK4JFi; unb=4019587167; lgc=tb358500429; cookie1=Vy67CEguTnSJl/VzmGz5paJ62i9fFGT9HvjV9icKaQ8=; login=true; cookie17=VyyQ6i7zQ9P42g==; cookie2=197e50ae683a22e757711bd7f59cc373; _nk_=tb358500429; sgcookie=E100Nx97fBNEdc/3ypQJKK641cABclS2aHX4zOx4Pf9Q4sFRYWLvsjomlB1Yu3ZuqJwXvA7j8v6nXtKsLY8LjZ4cQshZ/sviKugRYBGTwNnx/Xg=; cancelledSubSites=empty; t=ffa7190fdbb2626d89558148ebee6b74; sg=972; csg=643b5136; sn=; _tb_token_=e33553ee37e3b; bxuab=0; mtop_partitioned_detect=1; _m_h5_tk=383fe5e1273f10392a57e0a4bee75f28_1746782892762; _m_h5_tk_enc=15d37ffa1c899b799b43a5c932b597b0; tfstk=g9z-pZmjItXoREU-i7SDxA99XmfDwiVrk8P6-vDkA-eYQRLhau23DXw0p203OTyLJxwJ-uVuOBhQn4iUqvDop2FUBsXGSNVzaDoCIObG-seC0VRWR29nlEGrJbOoqNp_a2uCnIYCjNFzUm3j38gCMqGKNXgIF3OfMXhtd2MSAKtj1xgIRDTIlSGEspMQd21xlxlsRbwIVsFjha5nhHkBJlRD0ETJE_8pJrh-2vLnheHg5FmoCiD9-eDmd0duNxLBArE2bp6jFGRmL4DzJbeF7UuSvlPn98QJPJFau-hbCwLiFSPgj0z5xFmtrYn3PJBpvbEgeJk7NLtS64H-fzi26ePxAoUxrz6ebSVxFc30miWox4e8bAo50tyLMY2Qym9RnvqgiziYCtYYLDEatXeRyUw14vUgWMJHIYDwVsCvYHuSgcl0djt4-dQoMAfRxH-EmGGxIsCvYHoSgjHGw_xeYmj1.' \
+  --header 'Host: h5api.m.tmall.com' \
+  --header 'accept: */*' \
+  --header 'accept-language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6' \
+  --header 'referer: https://detail.tmall.com/' \
+  --header 'sec-ch-ua: "Chromium";v="136", "Microsoft Edge";v="136", "Not.A/Brand";v="99"' \
+  --header 'sec-ch-ua-mobile: ?0' \
+  --header 'sec-ch-ua-platform: "Windows"' \
+  --header 'sec-fetch-dest: script' \
+  --header 'sec-fetch-mode: no-cors' \
+  --header 'sec-fetch-site: same-site' \
+  --header 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0'
