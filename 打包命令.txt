@@ -1,0 +1,1 @@
+pyinstaller --onefile --windowed tmall_comment_crawler_gui.py

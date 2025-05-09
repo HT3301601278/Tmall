@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
                             QRadioButton, QButtonGroup)
 
 # 导入爬虫核心类
-from tmall_comment_crawler import TmallCommentCrawler
+from tmall_comment_crawler_cmd import TmallCommentCrawler
 
 # 定义样式表
 STYLE = """
@@ -182,11 +182,12 @@ class SaveThread(QThread):
     update_signal = pyqtSignal(str)
     finished_signal = pyqtSignal(bool, str)
     
-    def __init__(self, comments, selected_fields, output_file):
+    def __init__(self, comments, selected_fields, output_file, filter_empty_comments=False):
         super().__init__()
         self.comments = comments
         self.selected_fields = selected_fields
         self.output_file = output_file
+        self.filter_empty_comments = filter_empty_comments
         self.crawler = TmallCommentCrawler()
         
     def run(self):
@@ -197,7 +198,15 @@ class SaveThread(QThread):
             import pandas as pd
             
             data = []
+            filtered_count = 0
+            
             for comment in self.comments:
+                # 如果启用了空评价过滤，检查评论内容
+                feedback = comment.get('feedback', '')
+                if self.filter_empty_comments and feedback == "此用户没有填写评价。":
+                    filtered_count += 1
+                    continue
+                    
                 item = {}
                 for field, field_name in self.selected_fields.items():
                     # 处理嵌套字段，如 interactInfo.likeCount
@@ -211,11 +220,23 @@ class SaveThread(QThread):
                         item[field_name] = comment.get(field, '')
                 data.append(item)
             
-            df = pd.DataFrame(data)
-            df.to_excel(self.output_file, index=False)
-            
-            self.update_signal.emit(f"数据已成功保存到 {self.output_file}")
-            self.finished_signal.emit(True, self.output_file)
+            # 显示过滤信息
+            if self.filter_empty_comments and filtered_count > 0:
+                self.update_signal.emit(f"已过滤 {filtered_count} 条空评价")
+                
+            if data:
+                df = pd.DataFrame(data)
+                df.to_excel(self.output_file, index=False)
+                self.update_signal.emit(f"数据已成功保存到 {self.output_file}")
+                self.finished_signal.emit(True, self.output_file)
+            else:
+                if self.filter_empty_comments and filtered_count > 0:
+                    msg = f"所有 {filtered_count} 条评论均为空评价，已全部过滤，没有数据可保存"
+                    self.update_signal.emit(msg)
+                    self.finished_signal.emit(False, msg)
+                else:
+                    self.update_signal.emit("没有数据可保存")
+                    self.finished_signal.emit(False, "没有数据可保存")
             
         except Exception as e:
             error_msg = f"保存数据时出错: {str(e)}"
@@ -702,11 +723,21 @@ class TmallCommentCrawlerGUI(QMainWindow):
             QMessageBox.warning(self, "导出错误", "请至少选择一个要导出的字段")
             return
         
+        # 询问是否过滤空评价
+        reply = QMessageBox.question(self, "过滤空评价", 
+                                   "是否过滤空评价（\"此用户没有填写评价。\"）？",
+                                   QMessageBox.Yes | QMessageBox.No, 
+                                   QMessageBox.No)
+        filter_empty_comments = (reply == QMessageBox.Yes)
+        
+        if filter_empty_comments:
+            self.log("已启用空评价过滤功能")
+        
         # 禁用导出按钮
         self.export_btn.setEnabled(False)
         
         # 创建并启动保存线程
-        self.save_thread = SaveThread(self.comments, selected_fields, output_file)
+        self.save_thread = SaveThread(self.comments, selected_fields, output_file, filter_empty_comments)
         self.save_thread.update_signal.connect(self.log)
         self.save_thread.finished_signal.connect(self.on_save_finished)
         self.save_thread.start()

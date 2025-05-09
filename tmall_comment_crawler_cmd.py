@@ -161,11 +161,12 @@ class TmallCommentCrawler:
         sign_str = f"{self.token}&{timestamp}&12574478&{data_str}"
         return hashlib.md5(sign_str.encode('utf-8')).hexdigest()
     
-    def save_to_excel(self, comments, output_file=None):
+    def save_to_excel(self, comments, output_file=None, filter_empty_comments=False):
         """
         将评论数据保存到Excel文件
         :param comments: 评论数据列表
         :param output_file: 输出文件名，若为None则自动生成
+        :param filter_empty_comments: 是否过滤掉空评价（"此用户没有填写评价。"）
         """
         # 提取所有可能的字段
         data = []
@@ -185,20 +186,31 @@ class TmallCommentCrawler:
                     item_title = item_title[:30] + '...'
             
             # 生成文件名：商品ID_商品标题_评论数量_日期.xlsx
-            current_date = time.strftime("%Y%m%d", time.localtime())
+            current_date = time.strftime("%Y%m%d_%H%M%S", time.localtime())
             output_file = f"{item_id}_{item_title}_{len(comments)}条评论_{current_date}.xlsx"
         
         # 如果仍然没有文件名（如评论为空），使用默认文件名
         if not output_file:
             output_file = f"天猫商品评论_{time.strftime('%Y%m%d%H%M%S', time.localtime())}.xlsx"
         
+        # 记录过滤掉的空评价数量
+        filtered_count = 0
+        
         for comment in comments:
             try:
+                # 获取评论内容
+                feedback = comment.get('feedback', '')
+                
+                # 如果启用了空评价过滤，且评论内容为"此用户没有填写评价。"，则跳过
+                if filter_empty_comments and feedback == "此用户没有填写评价。":
+                    filtered_count += 1
+                    continue
+                
                 # 创建一个全面的评论数据字典
                 item = {
                     # 基本信息
                     '用户昵称': comment.get('userNick', ''),
-                    '评论内容': comment.get('feedback', ''),
+                    '评论内容': feedback,
                     '评论时间': comment.get('createTime', ''),
                     '评论时间间隔': comment.get('createTimeInterval', ''),
                     '评价日期': comment.get('feedbackDate', ''),
@@ -285,8 +297,14 @@ class TmallCommentCrawler:
             df = pd.DataFrame(data)
             df.to_excel(output_file, index=False)
             print(f"评论数据已保存到 {output_file}")
+            
+            # 显示过滤信息
+            if filter_empty_comments and filtered_count > 0:
+                print(f"已过滤 {filtered_count} 条空评价")
         else:
             print("没有评论数据可以保存")
+            if filter_empty_comments and filtered_count > 0:
+                print(f"所有 {filtered_count} 条评论均为空评价，已全部过滤")
 
 def main():
     # 使用示例
@@ -305,13 +323,18 @@ def main():
         print("输入无效，已设置为默认值5页")
         page_num = 5
     
+    # 询问用户是否过滤空评价
+    filter_empty = input("是否过滤空评价 (\"此用户没有填写评价。\") (y/n, 默认n): ").lower() == 'y'
+    
     print(f"即将爬取{page_num}页，共{page_num*20}条评论...")
+    if filter_empty:
+        print("已启用空评价过滤")
     
     # 获取评论
     comments = crawler.get_comments(item_id, page_num)
     
     # 保存到Excel，使用自动生成的文件名
-    crawler.save_to_excel(comments)
+    crawler.save_to_excel(comments, filter_empty_comments=filter_empty)
     
     print(f"共获取 {len(comments)} 条评论")
 
