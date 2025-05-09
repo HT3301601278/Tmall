@@ -138,42 +138,30 @@ class CrawlerThread(QThread):
         
     def run(self):
         self.update_signal.emit("开始爬取评论数据...")
-        all_comments = []
         
-        for page in range(1, self.page_num + 1):
-            self.update_signal.emit(f"正在爬取第 {page}/{self.page_num} 页评论...")
+        try:
+            # 调用爬虫类获取评论，一次性传入所有页数
+            all_comments = self.crawler.get_comments(self.item_id, self.page_num, self.order_type)
             
-            try:
-                # 调用爬虫类获取评论，传递排序方式
-                comments = self.crawler.get_comments(self.item_id, 1, self.order_type)
-                if comments:
-                    all_comments.extend(comments)
-                    self.update_signal.emit(f"成功获取第 {page} 页的 {len(comments)} 条评论")
+            # 爬虫类内部会处理进度更新，这里只需在最后更新进度为100%
+            self.progress_signal.emit(100)
+            
+            if all_comments:
+                self.update_signal.emit(f"爬取完成，共获取 {len(all_comments)} 条评论")
+            else:
+                # 检查爬虫对象中是否有错误信息
+                if hasattr(self.crawler, 'last_error') and self.crawler.last_error:
+                    self.update_signal.emit(f"评论获取失败: {self.crawler.last_error}")
                 else:
-                    # 检查爬虫对象中是否有错误信息
-                    if hasattr(self.crawler, 'last_error') and self.crawler.last_error:
-                        self.update_signal.emit(f"第 {page} 页评论获取失败: {self.crawler.last_error}")
-                    else:
-                        self.update_signal.emit(f"第 {page} 页没有找到评论数据")
-                
-                # 更新进度
-                progress = int((page / self.page_num) * 100)
-                self.progress_signal.emit(progress)
-                
-                # 暂停一下，避免请求过快
-                time.sleep(1)
-                
-            except Exception as e:
-                error_msg = str(e)
-                self.update_signal.emit(f"爬取第 {page} 页评论时出错: {error_msg}")
-                # 如果是API错误，显示更详细的信息
-                if "API调用失败" in error_msg:
-                    self.update_signal.emit(f"API错误详情: {error_msg}")
-        
-        if all_comments:
-            self.update_signal.emit(f"爬取完成，共获取 {len(all_comments)} 条评论")
-        else:
-            self.update_signal.emit("爬取完成，但未获取到任何评论，请检查商品ID是否正确或者查看日志获取详细错误信息")
+                    self.update_signal.emit(f"没有找到评论数据")
+                    
+        except Exception as e:
+            error_msg = str(e)
+            self.update_signal.emit(f"爬取评论时出错: {error_msg}")
+            # 如果是API错误，显示更详细的信息
+            if "API调用失败" in error_msg:
+                self.update_signal.emit(f"API错误详情: {error_msg}")
+            all_comments = []
         
         self.finished_signal.emit(all_comments)
 
