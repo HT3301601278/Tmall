@@ -11,7 +11,8 @@ from PyQt5.QtGui import QIcon, QFont, QPixmap, QColor
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                             QLabel, QLineEdit, QPushButton, QSpinBox, QProgressBar, 
                             QTextEdit, QCheckBox, QGroupBox, QScrollArea, QFileDialog,
-                            QMessageBox, QFrame, QSplitter, QTabWidget, QGridLayout)
+                            QMessageBox, QFrame, QSplitter, QTabWidget, QGridLayout,
+                            QRadioButton, QButtonGroup)
 
 # 导入爬虫核心类
 from tmall_comment_crawler import TmallCommentCrawler
@@ -106,6 +107,13 @@ QCheckBox::indicator {
 QScrollArea {
     border: none;
 }
+QRadioButton {
+    spacing: 5px;
+}
+QRadioButton::indicator {
+    width: 16px;
+    height: 16px;
+}
 """
 
 class CrawlerThread(QThread):
@@ -114,11 +122,12 @@ class CrawlerThread(QThread):
     progress_signal = pyqtSignal(int)  # 进度信号
     finished_signal = pyqtSignal(list)  # 完成信号，传递爬取的评论列表
     
-    def __init__(self, item_id, page_num, cookie=None):
+    def __init__(self, item_id, page_num, cookie=None, order_type=""):
         super().__init__()
         self.item_id = item_id
         self.page_num = page_num
         self.cookie = cookie
+        self.order_type = order_type
         self.crawler = TmallCommentCrawler()
         
         # 如果提供了自定义Cookie，则更新爬虫的Cookie
@@ -135,7 +144,8 @@ class CrawlerThread(QThread):
             self.update_signal.emit(f"正在爬取第 {page}/{self.page_num} 页评论...")
             
             try:
-                comments = self.crawler.get_comments(self.item_id, 1)
+                # 调用爬虫类获取评论，传递排序方式
+                comments = self.crawler.get_comments(self.item_id, 1, self.order_type)
                 if comments:
                     all_comments.extend(comments)
                     self.update_signal.emit(f"成功获取第 {page} 页的 {len(comments)} 条评论")
@@ -304,6 +314,30 @@ class TmallCommentCrawlerGUI(QMainWindow):
         self.start_btn.setFont(QFont("Microsoft YaHei", 9, QFont.Bold))
         self.start_btn.clicked.connect(self.start_crawling)
         settings_layout.addWidget(self.start_btn, 2, 3)
+        
+        # 添加排序选项
+        sort_label = QLabel("评论排序:")
+        sort_label.setFont(QFont("Microsoft YaHei", 9))
+        settings_layout.addWidget(sort_label, 3, 0)
+        
+        # 创建排序单选按钮
+        sort_layout = QHBoxLayout()
+        self.sort_btn_group = QButtonGroup()
+        
+        self.default_sort_btn = QRadioButton("默认排序")
+        self.default_sort_btn.setFont(QFont("Microsoft YaHei", 9))
+        self.default_sort_btn.setChecked(True)
+        self.sort_btn_group.addButton(self.default_sort_btn, 1)
+        
+        self.time_sort_btn = QRadioButton("时间排序")
+        self.time_sort_btn.setFont(QFont("Microsoft YaHei", 9))
+        self.sort_btn_group.addButton(self.time_sort_btn, 2)
+        
+        sort_layout.addWidget(self.default_sort_btn)
+        sort_layout.addWidget(self.time_sort_btn)
+        sort_layout.addStretch()
+        
+        settings_layout.addLayout(sort_layout, 3, 1, 1, 3)
         
         crawler_layout.addWidget(settings_group)
         
@@ -579,6 +613,9 @@ class TmallCommentCrawlerGUI(QMainWindow):
         page_num = self.page_spin.value()
         cookie = self.cookie_input.toPlainText().strip()
         
+        # 获取排序方式
+        order_type = "feedbackdate" if self.time_sort_btn.isChecked() else ""
+        
         # 检查参数有效性
         if not item_id:
             QMessageBox.warning(self, "参数错误", "请输入有效的商品ID")
@@ -594,10 +631,14 @@ class TmallCommentCrawlerGUI(QMainWindow):
         self.progress_bar.setValue(0)
         self.log(f"准备爬取商品ID: {item_id}，共 {page_num} 页")
         
+        # 记录排序方式
+        sort_type = "时间排序" if order_type == "feedbackdate" else "默认排序"
+        self.log(f"使用排序方式: {sort_type}")
+        
         self.log("使用自定义Cookie进行爬取")
         
         # 创建并启动爬虫线程
-        self.crawler_thread = CrawlerThread(item_id, page_num, cookie)
+        self.crawler_thread = CrawlerThread(item_id, page_num, cookie, order_type)
         self.crawler_thread.update_signal.connect(self.log)
         self.crawler_thread.progress_signal.connect(self.progress_bar.setValue)
         self.crawler_thread.finished_signal.connect(self.on_crawl_finished)

@@ -31,6 +31,7 @@ class TmallCommentCrawler:
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0'
         }
         self.base_url = 'https://h5api.m.tmall.com/h5/mtop.taobao.rate.detaillist.get/6.0/'
+        self.last_error = ""  # 存储最后一次错误信息
         
         # 从Cookie中提取token进行签名计算
         self._extract_token_from_cookie()
@@ -48,11 +49,12 @@ class TmallCommentCrawler:
         else:
             print("警告: 无法从Cookie中提取token，签名可能无效")
         
-    def get_comments(self, item_id, page_num=5):
+    def get_comments(self, item_id, page_num=5, order_type=""):
         """
         获取商品评论
         :param item_id: 商品ID
         :param page_num: 页数，每页20条评论，默认抓取5页共100条
+        :param order_type: 排序方式，为空表示默认排序，"feedbackdate"表示按时间排序
         :return: 评论数据列表
         """
         all_comments = []
@@ -70,7 +72,7 @@ class TmallCommentCrawler:
                 "pageSize": 20,
                 "rateType": "",
                 "searchImpr": "-8",
-                "orderType": "feedbackdate",
+                "orderType": order_type,
                 "expression": "",
                 "rateSrc": "pc_rate_list"
             }
@@ -78,6 +80,9 @@ class TmallCommentCrawler:
             # 使用正确的方式生成签名
             data_str = json.dumps(data)
             sign = self._generate_sign(timestamp, data_str)
+            
+            # 设置最后一次错误为空
+            self.last_error = ""
             
             params = {
                 'jsv': '2.7.4',
@@ -115,22 +120,30 @@ class TmallCommentCrawler:
                         else:
                             print(f"第 {page} 页没有找到评论数据")
                     else:
-                        print(f"API调用失败: {result.get('ret')}")
+                        error_msg = f"API调用失败: {result.get('ret')}"
+                        print(error_msg)
                         print(f"响应内容: {response.text[:200]}...")
+                        self.last_error = error_msg
                         
                         # 如果是鉴权问题，尝试更新Cookie
                         if "FAIL_SYS_TOKEN_EMPTY" in response.text or "FAIL_SYS_ILLEGAL_ACCESS" in response.text:
-                            print("鉴权失败，请更新Cookie和token")
+                            auth_error = "鉴权失败，请更新Cookie和token"
+                            print(auth_error)
+                            self.last_error = auth_error
                         
                 except Exception as e:
-                    print(f"解析第 {page} 页响应时出错: {e}")
+                    error_msg = f"解析第 {page} 页响应时出错: {e}"
+                    print(error_msg)
                     print(f"响应内容: {response.text[:200]}...")
+                    self.last_error = error_msg
                 
                 # 防止请求过快
                 time.sleep(random.uniform(1, 2))
                 
             except Exception as e:
-                print(f"爬取第 {page} 页评论时出错: {e}")
+                error_msg = f"爬取第 {page} 页评论时出错: {e}"
+                print(error_msg)
+                self.last_error = error_msg
                 continue
                 
         return all_comments
