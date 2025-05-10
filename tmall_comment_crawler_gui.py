@@ -205,7 +205,14 @@ class SaveThread(QThread):
                             value = value.get(part, {}) if isinstance(value, dict) else {}
                         item[field_name] = value or ''
                     else:
-                        item[field_name] = comment.get(field, '')
+                        # 获取原始值
+                        value = comment.get(field, '')
+                        # 处理字符串值，移除Excel不允许的字符
+                        if isinstance(value, str):
+                            # Excel中不允许使用的字符：0x00-0x1F（控制字符）
+                            # 替换为空格
+                            value = ''.join(c if ord(c) >= 32 else ' ' for c in value)
+                        item[field_name] = value
                 data.append(item)
             
             # 显示过滤信息
