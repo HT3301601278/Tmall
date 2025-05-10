@@ -49,17 +49,25 @@ class TmallCommentCrawler:
         else:
             print("警告: 无法从Cookie中提取token，签名可能无效")
         
-    def get_comments(self, item_id, page_num=5, order_type=""):
+    def get_comments(self, item_id, start_page=1, end_page=5, order_type="", progress_callback=None):
         """
         获取商品评论
         :param item_id: 商品ID
-        :param page_num: 页数，每页20条评论，默认抓取5页共100条
+        :param start_page: 起始页码，默认为第1页
+        :param end_page: 结束页码，默认为第5页
         :param order_type: 排序方式，为空表示默认排序，"feedbackdate"表示按时间排序
+        :param progress_callback: 进度回调函数，接收一个0-100的整数参数
         :return: 评论数据列表
         """
         all_comments = []
+        total_pages = end_page - start_page + 1
         
-        for page in range(1, page_num + 1):
+        for i, page in enumerate(range(start_page, end_page + 1)):
+            # 更新进度
+            if progress_callback:
+                progress = int((i / total_pages) * 100)
+                progress_callback(progress)
+            
             print(f"正在爬取第 {page} 页评论...")
             
             # 构建API请求参数
@@ -145,7 +153,11 @@ class TmallCommentCrawler:
                 print(error_msg)
                 self.last_error = error_msg
                 continue
-                
+        
+        # 完成所有爬取后，将进度设置为100%
+        if progress_callback:
+            progress_callback(100)
+            
         return all_comments
     
     def _generate_sign(self, timestamp, data_str):

@@ -122,10 +122,11 @@ class CrawlerThread(QThread):
     progress_signal = pyqtSignal(int)  # 进度信号
     finished_signal = pyqtSignal(list)  # 完成信号，传递爬取的评论列表
     
-    def __init__(self, item_id, page_num, cookie=None, order_type=""):
+    def __init__(self, item_id, start_page, end_page, cookie=None, order_type=""):
         super().__init__()
         self.item_id = item_id
-        self.page_num = page_num
+        self.start_page = start_page
+        self.end_page = end_page
         self.cookie = cookie
         self.order_type = order_type
         self.crawler = TmallCommentCrawler()
@@ -137,14 +138,21 @@ class CrawlerThread(QThread):
             self.crawler._extract_token_from_cookie()
         
     def run(self):
-        self.update_signal.emit("开始爬取评论数据...")
+        self.update_signal.emit(f"开始爬取评论数据，页码范围：{self.start_page} - {self.end_page}...")
         
         try:
-            # 调用爬虫类获取评论，一次性传入所有页数
-            all_comments = self.crawler.get_comments(self.item_id, self.page_num, self.order_type)
-            
-            # 爬虫类内部会处理进度更新，这里只需在最后更新进度为100%
-            self.progress_signal.emit(100)
+            # 创建进度更新回调函数
+            def update_progress(progress):
+                self.progress_signal.emit(progress)
+                
+            # 调用爬虫类获取评论，传入起始页、结束页和进度回调函数
+            all_comments = self.crawler.get_comments(
+                self.item_id, 
+                self.start_page, 
+                self.end_page, 
+                self.order_type,
+                progress_callback=update_progress
+            )
             
             if all_comments:
                 self.update_signal.emit(f"爬取完成，共获取 {len(all_comments)} 条评论")
@@ -308,16 +316,34 @@ class TmallCommentCrawlerGUI(QMainWindow):
         settings_layout.addWidget(cookie_label, 1, 0)
         settings_layout.addWidget(self.cookie_input, 1, 1, 1, 3)
         
-        # 页数设置
-        page_label = QLabel("爬取页数:")
+        # 修改这里：页码范围设置
+        page_label = QLabel("页码范围:")
         page_label.setFont(QFont("Microsoft YaHei", 9))
-        self.page_spin = QSpinBox()
-        self.page_spin.setRange(1, 100)
-        self.page_spin.setValue(5)
-        self.page_spin.setFont(QFont("Microsoft YaHei", 9))
-        self.page_spin.setToolTip("每页显示20条评论")
+        
+        # 起始页输入框
+        self.start_page_spin = QSpinBox()
+        self.start_page_spin.setRange(1, 100)
+        self.start_page_spin.setValue(1)
+        self.start_page_spin.setFont(QFont("Microsoft YaHei", 9))
+        
+        # 范围连接符
+        range_label = QLabel(" 至 ")
+        range_label.setFont(QFont("Microsoft YaHei", 9))
+        
+        # 结束页输入框
+        self.end_page_spin = QSpinBox()
+        self.end_page_spin.setRange(1, 100)
+        self.end_page_spin.setValue(5)
+        self.end_page_spin.setFont(QFont("Microsoft YaHei", 9))
+        
+        # 将页码范围控件添加到布局
+        page_range_layout = QHBoxLayout()
+        page_range_layout.addWidget(self.start_page_spin)
+        page_range_layout.addWidget(range_label)
+        page_range_layout.addWidget(self.end_page_spin)
+        
         settings_layout.addWidget(page_label, 2, 0)
-        settings_layout.addWidget(self.page_spin, 2, 1)
+        settings_layout.addLayout(page_range_layout, 2, 1)
         
         # 页数说明
         page_tip = QLabel("(每页20条评论)")
@@ -626,7 +652,8 @@ class TmallCommentCrawlerGUI(QMainWindow):
         """开始爬取评论"""
         # 获取输入参数
         item_id = self.id_input.text().strip()
-        page_num = self.page_spin.value()
+        start_page = self.start_page_spin.value()
+        end_page = self.end_page_spin.value()
         cookie = self.cookie_input.toPlainText().strip()
         
         # 获取排序方式
@@ -642,10 +669,15 @@ class TmallCommentCrawlerGUI(QMainWindow):
             QMessageBox.warning(self, "参数错误", "请提供有效的Cookie")
             return
             
+        # 检查页码范围是否有效
+        if start_page > end_page:
+            QMessageBox.warning(self, "参数错误", "起始页不能大于结束页")
+            return
+        
         # 禁用开始按钮，避免重复点击
         self.start_btn.setEnabled(False)
         self.progress_bar.setValue(0)
-        self.log(f"准备爬取商品ID: {item_id}，共 {page_num} 页")
+        self.log(f"准备爬取商品ID: {item_id}，页码范围: {start_page} - {end_page}")
         
         # 记录排序方式
         sort_type = "时间排序" if order_type == "feedbackdate" else "默认排序"
@@ -654,7 +686,7 @@ class TmallCommentCrawlerGUI(QMainWindow):
         self.log("使用自定义Cookie进行爬取")
         
         # 创建并启动爬虫线程
-        self.crawler_thread = CrawlerThread(item_id, page_num, cookie, order_type)
+        self.crawler_thread = CrawlerThread(item_id, start_page, end_page, cookie, order_type)
         self.crawler_thread.update_signal.connect(self.log)
         self.crawler_thread.progress_signal.connect(self.progress_bar.setValue)
         self.crawler_thread.finished_signal.connect(self.on_crawl_finished)
